@@ -76,15 +76,13 @@ export function CameraController() {
         camera.lookAt(currentLook);
 
       } else if (t < 4.0) {
-        // Phase 2: High speed train tracking + Camera shake
+        // Phase 2: High speed train tracking (Smooth)
         // Move camera alongside an imaginary train
         const progress = (t - 2.0) / 2.0;
         camera.position.x = 25 - (progress * 50); // Move from x=25 to x=-25
         
-        // Add aggressive camera shake
-        const shake = Math.sin(t * 50) * 0.1;
-        camera.position.y = 1.5 + shake;
-        camera.position.z = 4 + (Math.cos(t * 40) * 0.05);
+        camera.position.y = 1.5;
+        camera.position.z = 4;
         
         camera.lookAt(new THREE.Vector3(camera.position.x - 10, 1.5, 4));
 
