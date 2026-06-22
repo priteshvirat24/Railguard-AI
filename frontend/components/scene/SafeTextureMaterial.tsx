@@ -27,7 +27,7 @@ export function SafeTextureMaterial({ prefix, fallbackColor, ...props }: SafeTex
   return <LoadedTextureMaterial prefix={prefix} {...props} />;
 }
 
-function LoadedTextureMaterial({ prefix, ...props }: { prefix: string, [key: string]: any }) {
+function LoadedTextureMaterial({ prefix, ...props }: { prefix: string, [key: string]: unknown }) {
   // We assume normal and roughness maps might exist if diffuse exists. 
   // Drei's useTexture will throw if they don't, but for this custom setup,
   // we could optionally check them all. To keep it simple, we only load diffuse for now,

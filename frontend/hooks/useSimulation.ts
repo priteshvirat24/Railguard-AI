@@ -10,6 +10,7 @@ import { SimulationSnapshot, SimulationEvent } from "@/lib/types";
 export function useSimulation() {
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimer = useRef<NodeJS.Timeout | null>(null);
+  const reconnectAttempts = useRef(0);
   const {
     setConnected,
     updateFromSnapshot,
@@ -25,6 +26,7 @@ export function useSimulation() {
 
       ws.onopen = () => {
         setConnected(true);
+        reconnectAttempts.current = 0; // Reset attempts on success
         if (reconnectTimer.current) {
           clearTimeout(reconnectTimer.current);
           reconnectTimer.current = null;
@@ -49,15 +51,19 @@ export function useSimulation() {
       ws.onclose = () => {
         setConnected(false);
         wsRef.current = null;
-        // Reconnect after 2 seconds
-        reconnectTimer.current = setTimeout(connect, 2000);
+        // Exponential backoff: 2s, 4s, 8s, max 30s
+        const backoff = Math.min(30000, 2000 * Math.pow(2, reconnectAttempts.current));
+        reconnectAttempts.current++;
+        reconnectTimer.current = setTimeout(connect, backoff);
       };
 
       ws.onerror = () => {
         ws.close();
       };
     } catch {
-      reconnectTimer.current = setTimeout(connect, 2000);
+      const backoff = Math.min(30000, 2000 * Math.pow(2, reconnectAttempts.current));
+      reconnectAttempts.current++;
+      reconnectTimer.current = setTimeout(connect, backoff);
     }
   }, [setConnected, updateFromSnapshot, addEvent]);
 

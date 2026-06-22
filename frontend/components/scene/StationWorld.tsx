@@ -95,7 +95,7 @@ export function StationWorld() {
 import { useState, useEffect } from "react";
 import { useGLTF } from "@react-three/drei";
 
-function SafeGLTF({ url, fallback, ...props }: { url: string, fallback: React.ReactNode, [key: string]: any }) {
+function SafeGLTF({ url, fallback, ...props }: { url: string, fallback: React.ReactNode, [key: string]: unknown }) {
   const [exists, setExists] = useState<boolean | null>(null);
   
   useEffect(() => {
@@ -110,7 +110,7 @@ function SafeGLTF({ url, fallback, ...props }: { url: string, fallback: React.Re
   return <LoadedGLTF url={url} {...props} />;
 }
 
-function LoadedGLTF({ url, ...props }: { url: string, [key: string]: any }) {
+function LoadedGLTF({ url, ...props }: { url: string, [key: string]: unknown }) {
   const { scene } = useGLTF(url);
   // Clone to allow multiple instances if needed, and ensure it can be mutated
   const clonedScene = useMemo(() => scene.clone(), [scene]);

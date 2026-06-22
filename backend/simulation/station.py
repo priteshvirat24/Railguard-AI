@@ -11,18 +11,21 @@ import math
 import random
 
 
+from config import AppConfig
+
 class Station:
     """Represents the railway station with all its components."""
 
-    def __init__(self, config: StationConfig, event_store: EventStore):
-        self.config = config
+    def __init__(self, config: AppConfig, event_store: EventStore):
+        self.app_config = config
+        self.config = config.station
         self.event_store = event_store
         self.state = StationState.NORMAL
         self.tick = 0
 
         # Initialize platforms
         self.platforms: dict[int, Platform] = {}
-        for p_cfg in config.platforms:
+        for p_cfg in self.config.platforms:
             self.platforms[p_cfg["id"]] = Platform(
                 id=p_cfg["id"],
                 name=p_cfg["name"],
@@ -34,7 +37,7 @@ class Station:
 
         # Initialize tracks
         self.tracks: dict[int, Track] = {}
-        for t_cfg in config.tracks:
+        for t_cfg in self.config.tracks:
             self.tracks[t_cfg["id"]] = Track(
                 id=t_cfg["id"],
                 platform_ids=t_cfg["platforms"],
@@ -183,11 +186,11 @@ class Station:
                 ))
         else:
             density = platform.current_density
-            if density >= 0.85:
+            if density >= self.app_config.simulation.critical_threshold:
                 platform.state = PlatformState.CRITICAL
-            elif density >= 0.7:
+            elif density >= self.app_config.simulation.warning_threshold:
                 platform.state = PlatformState.WARNING
-            elif density >= 0.55:
+            elif density >= self.app_config.simulation.congesting_threshold:
                 platform.state = PlatformState.CONGESTING
             else:
                 platform.state = PlatformState.NORMAL

@@ -9,7 +9,7 @@ import { Train } from "@/lib/types";
 import { useSimulationStore } from "@/stores/simulationStore";
 import { useGLTF } from "@react-three/drei";
 
-function SafeGLTF({ url, fallback, ...props }: { url: string, fallback: React.ReactNode, [key: string]: any }) {
+function SafeGLTF({ url, fallback, ...props }: { url: string, fallback: React.ReactNode, [key: string]: unknown }) {
   const [exists, setExists] = useState<boolean | null>(null);
   
   useEffect(() => {
@@ -24,7 +24,7 @@ function SafeGLTF({ url, fallback, ...props }: { url: string, fallback: React.Re
   return <LoadedGLTF url={url} {...props} />;
 }
 
-function LoadedGLTF({ url, ...props }: { url: string, [key: string]: any }) {
+function LoadedGLTF({ url, ...props }: { url: string, [key: string]: unknown }) {
   const { scene } = useGLTF(url);
   const clonedScene = useMemo(() => scene.clone(), [scene]);
   return <primitive object={clonedScene} {...props} />;

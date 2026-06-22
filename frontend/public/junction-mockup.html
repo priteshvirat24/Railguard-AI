@@ -1,0 +1,712 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Railway Security Control System — Mockup</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+
+:root{
+  --bg-canvas:#0B0E12; --bg-base:#11151B; --bg-raised:#171C24; --bg-overlay:#1B2129;
+  --line:#232A33; --line-strong:#2E3742; --scrim:rgba(7,9,12,0.62);
+  --text-primary:#E6EAEF; --text-secondary:#9AA4B0; --text-muted:#5E6975;
+  --sig-clear:#3FB97A; --sig-caution:#E0A23B; --sig-high:#E8743B; --sig-danger:#E5484D;
+  --focus:#34B6D6; --focus-glow:rgba(52,182,214,0.28);
+  /* neutral categorical series — NOT signal aspects */
+  --cat-1:#34B6D6; --cat-2:#5C7CFA; --cat-3:#3A8FB7; --cat-4:#7C8B9A;
+  --mono:'IBM Plex Mono',ui-monospace,monospace;
+  --sans:'IBM Plex Sans',system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:var(--sans);background:var(--bg-canvas);color:var(--text-primary);
+  font-size:14px;line-height:1.4;overflow:hidden;-webkit-font-smoothing:antialiased;
+}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.eyebrow{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);font-weight:500}
+button{font-family:inherit;color:inherit;background:none;border:none;cursor:pointer}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:3px}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-thumb{background:var(--line-strong);border-radius:8px}
+::-webkit-scrollbar-track{background:transparent}
+
+/* ---------- App shell ---------- */
+#app{
+  height:100vh;display:grid;
+  grid-template-columns:56px 272px 1fr;
+  grid-template-rows:48px 1fr;
+  grid-template-areas:"topbar topbar topbar" "rail list map";
+}
+
+/* ---------- Top status bar ---------- */
+.topbar{
+  grid-area:topbar;display:flex;align-items:center;gap:18px;padding:0 16px;
+  background:var(--bg-base);border-bottom:1px solid var(--line);
+}
+.brand{display:flex;align-items:center;gap:9px;font-weight:600;letter-spacing:.02em}
+.brand .logo{width:22px;height:22px;border:1.5px solid var(--focus);border-radius:5px;display:grid;place-items:center}
+.brand .logo::after{content:"";width:8px;height:8px;border:1.5px solid var(--focus);border-radius:2px;transform:rotate(45deg)}
+.topbar .junction{color:var(--text-secondary);font-size:13px}
+.topbar .junction b{color:var(--text-primary);font-weight:600;letter-spacing:.03em}
+.topbar .spacer{flex:1}
+.alarm-count{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--text-secondary);cursor:pointer}
+.alarm-count .dot{width:8px;height:8px;border-radius:50%;background:var(--sig-danger);animation:pulse 1.4s ease-in-out infinite}
+.alarm-count b{color:var(--sig-danger);font-family:var(--mono);font-weight:500}
+.clock{font-family:var(--mono);font-size:13px;color:var(--text-secondary)}
+.op{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-secondary)}
+.op .ava{width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,#2a3340,#3a4654);display:grid;place-items:center;font-size:11px;color:var(--text-primary);font-weight:600}
+
+/* ---------- Icon rail ---------- */
+.rail{grid-area:rail;background:var(--bg-base);border-right:1px solid var(--line);
+  display:flex;flex-direction:column;align-items:center;padding:10px 0;gap:4px}
+.rail button{width:36px;height:36px;border-radius:7px;display:grid;place-items:center;color:var(--text-muted)}
+.rail button:hover{background:var(--bg-raised);color:var(--text-secondary)}
+.rail button.active{background:rgba(52,182,214,.12);color:var(--focus)}
+.rail .sp{flex:1}
+.rail svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.6}
+
+/* ---------- Platform list ---------- */
+.list{grid-area:list;background:var(--bg-base);border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+.list .head{padding:14px 14px 10px;display:flex;align-items:center;justify-content:space-between}
+.list .head h2{font-size:15px;font-weight:600}
+.list .head .sort{font-size:11px;color:var(--text-muted)}
+.search{margin:0 14px 8px;display:flex;align-items:center;gap:8px;background:var(--bg-raised);border:1px solid var(--line);border-radius:7px;padding:8px 10px}
+.search svg{width:14px;height:14px;stroke:var(--text-muted);fill:none;stroke-width:1.6}
+.search input{background:none;border:none;color:var(--text-primary);font-size:13px;width:100%}
+.search input::placeholder{color:var(--text-muted)}
+.rows{overflow-y:auto;padding:4px 8px 12px;min-height:0}
+.prow{display:block;width:100%;text-align:left;background:var(--bg-raised);border:1px solid var(--line);border-radius:8px;
+  padding:11px 12px;margin-bottom:7px;cursor:pointer;transition:border-color .12s,background .12s}
+.prow:hover{border-color:var(--line-strong);background:#1B2129}
+.prow.sel{border-color:var(--focus);box-shadow:0 0 0 1px var(--focus-glow)}
+.prow .r1{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
+.prow .pid{font-weight:600;font-size:14px;letter-spacing:.02em}
+.prow .r2{display:flex;align-items:center;gap:8px}
+.occbar{flex:1;height:5px;border-radius:3px;background:var(--line);overflow:hidden}
+.occbar i{display:block;height:100%;border-radius:3px}
+.prow .occv{font-family:var(--mono);font-size:12px;color:var(--text-secondary);min-width:34px;text-align:right}
+.prow .eta{display:flex;align-items:center;justify-content:space-between;margin-top:8px;font-size:11px;color:var(--text-muted)}
+.prow .eta .in{display:flex;align-items:center;gap:5px}
+.prow .eta .in svg{width:12px;height:12px;stroke:var(--focus);fill:none;stroke-width:1.6}
+
+/* status pill */
+.pill{font-size:10.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;padding:3px 8px;border-radius:4px;font-family:var(--sans)}
+.pill.clear{background:rgba(63,185,122,.14);color:var(--sig-clear)}
+.pill.caution{background:rgba(224,162,59,.15);color:var(--sig-caution)}
+.pill.high{background:rgba(232,116,59,.15);color:var(--sig-high)}
+.pill.critical{background:rgba(229,72,77,.16);color:var(--sig-danger)}
+
+/* ---------- Map ---------- */
+.map{grid-area:map;position:relative;background:var(--bg-canvas);overflow:hidden}
+.map svg.tracks{position:absolute;inset:0;width:100%;height:100%}
+.platform{position:absolute;transform:translate(-50%,-50%);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;z-index:10}
+.platform .bar{width:54px;height:13px;border-radius:3px;border:1.5px solid var(--line-strong);background:#161b22;position:relative;display:grid;place-items:center;transition:transform .12s}
+.platform:hover .bar{transform:scale(1.08)}
+.platform .bar .aspect{width:8px;height:8px;border-radius:50%}
+.platform.clear .bar{border-color:rgba(63,185,122,.5)} .platform.clear .aspect{background:var(--sig-clear)}
+.platform.caution .bar{border-color:rgba(224,162,59,.55)} .platform.caution .aspect{background:var(--sig-caution)}
+.platform.high .bar{border-color:rgba(232,116,59,.6)} .platform.high .aspect{background:var(--sig-high)}
+.platform.critical .bar{border-color:var(--sig-danger)} .platform.critical .aspect{background:var(--sig-danger)}
+.platform.critical .bar::after{content:"";position:absolute;inset:-5px;border-radius:6px;border:1.5px solid var(--sig-danger);opacity:.0;animation:ringpulse 1.3s ease-in-out infinite}
+.platform .plabel{font-family:var(--mono);font-size:11px;color:var(--text-secondary);background:rgba(11,14,18,.7);padding:1px 5px;border-radius:3px}
+.platform.sel .plabel{color:var(--focus)}
+.platform.sel .bar{box-shadow:0 0 0 2px var(--focus-glow),0 0 14px var(--focus-glow)}
+.platform .miniocc{width:54px;height:3px;border-radius:2px;background:var(--line);overflow:hidden}
+.platform .miniocc i{display:block;height:100%}
+
+/* train glyph */
+.train{position:absolute;z-index:9;width:30px;height:13px;transform:translate(-50%,-50%);pointer-events:none}
+.train .body{width:100%;height:100%;border-radius:3px;background:#9aa4b0;border:1px solid #c4ccd6;position:relative}
+.train.sel .body{background:#bcd4dc;border-color:var(--focus)}
+.train.sel::before{content:"";position:absolute;inset:-8px;border-radius:50%;background:radial-gradient(circle,var(--focus-glow),transparent 70%)}
+
+/* peek tooltip */
+.peek{position:absolute;z-index:30;background:var(--bg-overlay);border:1px solid var(--line-strong);border-radius:8px;padding:10px 12px;
+  width:180px;box-shadow:0 8px 24px rgba(0,0,0,.5);pointer-events:none;transform:translate(-50%,calc(-100% - 14px));display:none}
+.peek.show{display:block}
+.peek h4{font-size:12px;letter-spacing:.03em;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center}
+.peek .pk-row{display:flex;justify-content:space-between;font-size:11px;color:var(--text-secondary);margin-top:3px}
+.peek .pk-row b{font-family:var(--mono);color:var(--text-primary)}
+
+/* map controls + hint */
+.mapctl{position:absolute;right:16px;bottom:160px;z-index:20;display:flex;flex-direction:column;gap:6px}
+.mapctl button{width:34px;height:34px;border-radius:7px;background:var(--bg-overlay);border:1px solid var(--line);display:grid;place-items:center;color:var(--text-secondary)}
+.mapctl button:hover{border-color:var(--line-strong);color:var(--text-primary)}
+.mapctl svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.6}
+.hint{position:absolute;left:16px;top:14px;z-index:20;background:var(--bg-overlay);border:1px solid var(--line-strong);
+  border-radius:20px;padding:7px 13px;font-size:12px;color:var(--text-secondary);display:flex;align-items:center;gap:7px}
+.hint .k{font-family:var(--mono);font-size:10px;color:var(--focus);border:1px solid var(--line-strong);border-radius:4px;padding:1px 5px}
+
+/* telemetry strip */
+.telstrip{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);z-index:20;display:flex;gap:10px}
+.telcard{background:var(--bg-overlay);border:1px solid var(--line);border-radius:10px;padding:12px 14px 10px;width:218px}
+.telcard .th{display:flex;align-items:center;gap:7px;margin-bottom:9px}
+.telcard .th svg{width:14px;height:14px;stroke:var(--text-muted);fill:none;stroke-width:1.6}
+.telcard .th span{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--text-secondary);font-weight:500}
+.telcard svg.chart{width:100%;height:46px;display:block}
+
+/* ---------- Overlay + dashboard ---------- */
+.overlay{position:fixed;inset:0;z-index:40;background:var(--scrim);
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+  display:flex;align-items:center;justify-content:center;padding:28px;
+  opacity:0;visibility:hidden;transition:opacity .28s cubic-bezier(.2,0,0,1),visibility .28s}
+.overlay.open{opacity:1;visibility:visible}
+.dash{width:100%;max-width:1180px;max-height:calc(100vh - 56px);overflow-y:auto;
+  background:var(--bg-overlay);border:1px solid var(--line-strong);border-radius:12px;
+  box-shadow:0 24px 70px rgba(0,0,0,.6);
+  transform:scale(.96) translateY(10px);transition:transform .28s cubic-bezier(.2,0,0,1)}
+.overlay.open .dash{transform:none}
+
+.dash-head{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:14px;padding:16px 20px;
+  background:var(--bg-overlay);border-bottom:1px solid var(--line)}
+.dash-head .switch{display:flex;align-items:center;gap:4px}
+.dash-head .switch button{width:28px;height:28px;border-radius:6px;border:1px solid var(--line);display:grid;place-items:center;color:var(--text-secondary)}
+.dash-head .switch button:hover{border-color:var(--line-strong);color:var(--text-primary)}
+.dash-head .pf-id{font-size:22px;font-weight:600;letter-spacing:.02em}
+.dash-head .sub{font-size:12px;color:var(--text-muted);font-family:var(--mono)}
+.dash-head .spacer{flex:1}
+.dash-head .close{width:32px;height:32px;border-radius:7px;border:1px solid var(--line);display:grid;place-items:center;color:var(--text-secondary)}
+.dash-head .close:hover{border-color:var(--sig-danger);color:var(--sig-danger)}
+.dash-head svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.7}
+
+.dash-body{padding:18px 20px 22px;display:flex;flex-direction:column;gap:16px}
+
+/* KPI strip */
+.kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+.kpi{background:var(--bg-raised);border:1px solid var(--line);border-radius:9px;padding:13px}
+.kpi .kl{display:flex;align-items:center;gap:6px;margin-bottom:10px}
+.kpi .kl svg{width:14px;height:14px;stroke:var(--text-muted);fill:none;stroke-width:1.6}
+.kpi .kl span{font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--text-muted)}
+.kpi .kv{font-family:var(--mono);font-size:20px;font-weight:500;line-height:1}
+.kpi .ku{font-size:11px;color:var(--text-muted);margin-top:5px;display:flex;align-items:center;gap:6px}
+.delta{font-family:var(--mono);font-size:11px;display:inline-flex;align-items:center;gap:2px;color:var(--text-secondary)}
+.delta.up{color:var(--focus)} .delta.down{color:var(--text-secondary)}
+
+/* grid rows */
+.grid-2{display:grid;grid-template-columns:280px 1fr;gap:16px}
+.grid-2b{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.panel{background:var(--bg-raised);border:1px solid var(--line);border-radius:10px;padding:15px}
+.panel .ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.panel .ph h3{font-size:13px;font-weight:600;letter-spacing:.02em}
+.panel .ph .va{font-size:11px;color:var(--focus);display:flex;align-items:center;gap:3px}
+
+/* gauge */
+.gauge-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:6px 0}
+.gauge-wrap svg{width:190px;height:130px}
+.gauge-val{font-family:var(--mono);font-size:30px;font-weight:500}
+.gauge-cap{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em}
+
+/* severity rings */
+.rings{display:flex;justify-content:space-between;gap:8px}
+.ring{display:flex;flex-direction:column;align-items:center;gap:8px;flex:1}
+.ring svg{width:74px;height:74px}
+.ring .rc{font-family:var(--mono);font-size:18px;font-weight:500}
+.ring .rl{font-size:10.5px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.03em}
+
+/* zone heatmap */
+.platform-schem{display:flex;flex-direction:column;gap:12px}
+.schem-rail{position:relative;display:flex;gap:3px;height:62px}
+.zone{flex:1;border-radius:5px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:1px solid rgba(255,255,255,.04)}
+.zone .zn{font-family:var(--mono);font-size:13px;font-weight:500;color:#0B0E12}
+.zone .zd{font-family:var(--mono);font-size:10px;color:rgba(11,14,18,.65)}
+.callout{position:absolute;top:-34px;background:var(--bg-overlay);border:1px solid var(--sig-danger);border-radius:7px;padding:5px 9px;
+  font-size:11px;color:var(--text-primary);transform:translateX(-50%);white-space:nowrap;box-shadow:0 6px 18px rgba(0,0,0,.5)}
+.callout b{font-family:var(--mono);color:var(--sig-danger)}
+.callout::after{content:"";position:absolute;left:50%;bottom:-5px;width:8px;height:8px;background:var(--bg-overlay);border-right:1px solid var(--sig-danger);border-bottom:1px solid var(--sig-danger);transform:translateX(-50%) rotate(45deg)}
+.schem-marks{display:flex;justify-content:space-between;font-size:10px;color:var(--text-muted);font-family:var(--mono)}
+.zonelist{display:flex;flex-direction:column;gap:6px;margin-top:4px}
+.zl-row{display:grid;grid-template-columns:24px 52px 1fr 30px;align-items:center;gap:8px;font-size:12px}
+.zl-row .zlz{font-family:var(--mono);color:var(--text-secondary)}
+.zl-row .zln{font-family:var(--mono);color:var(--text-primary)}
+.zl-bar{height:5px;border-radius:3px;background:var(--line);overflow:hidden}
+.zl-bar i{display:block;height:100%}
+.zl-row .zlt{text-align:right}
+.trend{font-size:12px}.trend.up{color:var(--sig-danger)}.trend.down{color:var(--sig-clear)}.trend.flat{color:var(--text-muted)}
+
+/* inflow stacked bars */
+.inflow{display:flex;align-items:flex-end;gap:14px;height:150px;padding:6px 4px 0}
+.icol{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end}
+.istack{width:100%;max-width:34px;border-radius:4px 4px 0 0;overflow:hidden;display:flex;flex-direction:column-reverse}
+.istack i{display:block;width:100%}
+.icol .ix{font-size:10px;color:var(--text-muted);font-family:var(--mono)}
+.legend{display:flex;gap:14px;margin-top:12px;flex-wrap:wrap}
+.legend span{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-secondary)}
+.legend i{width:9px;height:9px;border-radius:2px}
+
+/* asset health */
+.assets{display:flex;flex-direction:column;gap:8px;max-height:200px;overflow-y:auto}
+.arow{display:flex;align-items:center;gap:9px;font-size:12px;color:var(--text-secondary)}
+.arow .adot{width:8px;height:8px;border-radius:50%}
+.arow .an{font-family:var(--mono);color:var(--text-primary);flex:1}
+.arow .as{font-size:10.5px;text-transform:uppercase;letter-spacing:.04em}
+.online{color:var(--sig-clear)} .fault{color:var(--sig-danger)} .stale{color:var(--text-muted)}
+.bg-online{background:var(--sig-clear)} .bg-fault{background:var(--sig-danger)} .bg-stale{background:var(--text-muted)}
+
+/* donut */
+.donut-wrap{display:flex;align-items:center;gap:16px}
+.donut{width:120px;height:120px;border-radius:50%;flex-shrink:0;position:relative}
+.donut::after{content:"";position:absolute;inset:24px;border-radius:50%;background:var(--bg-raised)}
+.dlegend{display:flex;flex-direction:column;gap:8px;flex:1}
+.dl-row{display:flex;align-items:center;gap:8px;font-size:12px}
+.dl-row i{width:9px;height:9px;border-radius:2px}
+.dl-row .dlv{margin-left:auto;font-family:var(--mono);color:var(--text-secondary)}
+
+/* breaches */
+.breaches{display:flex;flex-direction:column;gap:10px}
+.br-row{display:flex;flex-direction:column;gap:5px}
+.br-top{display:flex;justify-content:space-between;font-size:12px}
+.br-top .brl{color:var(--text-primary)}
+.br-top .brd{font-family:var(--mono);color:var(--text-secondary)}
+.br-bar{height:4px;border-radius:3px;overflow:hidden;background:var(--line)}
+.br-bar i{display:block;height:100%}
+
+/* alarm banner */
+.banner{position:fixed;top:0;left:0;right:0;z-index:60;display:flex;align-items:center;gap:14px;
+  padding:12px 20px;background:linear-gradient(180deg,#2a1416,#1f1012);border-bottom:1px solid var(--sig-danger);
+  transform:translateY(-100%);transition:transform .26s cubic-bezier(.2,0,0,1)}
+.banner.show{transform:none}
+.banner .bdot{width:10px;height:10px;border-radius:50%;background:var(--sig-danger);animation:pulse 1.1s ease-in-out infinite}
+.banner .bmsg{font-size:13px;color:var(--text-primary)}
+.banner .bmsg b{font-family:var(--mono);color:var(--sig-danger)}
+.banner .spacer{flex:1}
+.banner button{font-size:12px;padding:7px 14px;border-radius:6px;border:1px solid var(--line-strong);color:var(--text-secondary)}
+.banner button.jump{border-color:var(--sig-danger);color:var(--sig-danger)}
+.banner button:hover{background:rgba(255,255,255,.04)}
+
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+@keyframes ringpulse{0%{opacity:.0;transform:scale(.9)}40%{opacity:.7}100%{opacity:0;transform:scale(1.25)}}
+@keyframes trainmove1{from{left:8%;top:30%}to{left:78%;top:58%}}
+@keyframes trainmove2{from{left:88%;top:18%}to{left:18%;top:84%}}
+@keyframes trainmove3{from{left:20%;top:90%}to{left:70%;top:12%}}
+
+@media (prefers-reduced-motion:reduce){
+  *{animation:none !important;transition:opacity .12s !important}
+  .overlay .dash{transform:none}
+}
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- TOP STATUS BAR -->
+  <header class="topbar">
+    <div class="brand"><span class="logo"></span>SENTINEL&nbsp;RAIL</div>
+    <div class="junction">JUNCTION: <b>NEW DELHI · NDLS</b></div>
+    <div class="spacer"></div>
+    <div class="alarm-count" id="alarmCount"><span class="dot"></span><b>1</b>&nbsp;ALARM</div>
+    <div class="clock mono" id="clock">14:32:08</div>
+    <div class="op"><span class="ava">RG</span>OP · R. GUNWANI</div>
+  </header>
+
+  <!-- ICON RAIL -->
+  <nav class="rail">
+    <button class="active" title="Junction map"><svg viewBox="0 0 24 24"><path d="M9 3 3 6v15l6-3 6 3 6-3V3l-6 3-6-3Z"/><path d="M9 3v15M15 6v15"/></svg></button>
+    <button title="Platform list"><svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg></button>
+    <button title="Routing"><svg viewBox="0 0 24 24"><path d="M3 6h11l4 4M3 18h11l4-4M18 4l3 3-3 3"/></svg></button>
+    <button title="Alerts"><svg viewBox="0 0 24 24"><path d="M12 3 2 20h20L12 3ZM12 9v5M12 17h.01"/></svg></button>
+    <button title="Signals"><svg viewBox="0 0 24 24"><path d="M12 2v20M5 8l7-3 7 3M5 14l7-3 7 3"/></svg></button>
+    <span class="sp"></span>
+    <button title="Settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg></button>
+  </nav>
+
+  <!-- PLATFORM LIST -->
+  <aside class="list">
+    <div class="head"><h2>Platforms</h2><span class="sort">RISK ↓</span></div>
+    <div class="search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/></svg>
+      <input id="search" placeholder="Search platform or service…"></div>
+    <div class="rows" id="rows"></div>
+  </aside>
+
+  <!-- MAP -->
+  <main class="map" id="map">
+    <svg class="tracks" viewBox="0 0 1000 700" preserveAspectRatio="xMidYMid slice">
+      <g stroke="#232A33" stroke-width="3" fill="none">
+        <path d="M-20 220 L1020 360"/>
+        <path d="M-20 300 L1020 440"/>
+        <path d="M120 -20 L560 720"/>
+        <path d="M300 -20 L760 720"/>
+        <path d="M-20 560 L700 -20"/>
+        <path d="M520 720 L1020 180"/>
+      </g>
+      <g fill="#2E3742">
+        <circle cx="300" cy="276" r="5"/><circle cx="430" cy="305" r="5"/>
+        <circle cx="560" cy="333" r="5"/><circle cx="690" cy="361" r="5"/>
+        <circle cx="220" cy="380" r="5"/>
+      </g>
+    </svg>
+
+    <div class="hint"><span class="k">CLICK</span> a platform to open its analysis</div>
+
+    <div id="markers"></div>
+
+    <!-- trains -->
+    <div class="train sel" style="animation:trainmove1 22s linear infinite"><div class="body"></div></div>
+    <div class="train" style="animation:trainmove2 30s linear infinite"><div class="body"></div></div>
+    <div class="train" style="animation:trainmove3 26s linear infinite"><div class="body"></div></div>
+
+    <div class="peek" id="peek"></div>
+
+    <div class="mapctl">
+      <button title="Recenter"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg></button>
+      <button title="Layers"><svg viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5 9-5ZM3 13l9 5 9-5"/></svg></button>
+      <button title="Zoom in"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+      <button title="Zoom out"><svg viewBox="0 0 24 24"><path d="M5 12h14"/></svg></button>
+    </div>
+
+    <!-- TELEMETRY STRIP -->
+    <div class="telstrip">
+      <div class="telcard">
+        <div class="th"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l3-4 3 3 4-6"/></svg><span>Throughput · trains/hr</span></div>
+        <svg class="chart" id="ch-thru" viewBox="0 0 190 46"></svg>
+      </div>
+      <div class="telcard">
+        <div class="th"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><rect x="6" y="9" width="3" height="9"/><rect x="11" y="5" width="3" height="13"/><rect x="16" y="12" width="3" height="6"/></svg><span>Platform load · live mean</span></div>
+        <svg class="chart" id="ch-load" viewBox="0 0 190 46"></svg>
+      </div>
+      <div class="telcard">
+        <div class="th"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M6 16l4-2 3 1 5-9"/></svg><span>Alert rate · 15m</span></div>
+        <svg class="chart" id="ch-alert" viewBox="0 0 190 46"></svg>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ALARM BANNER -->
+<div class="banner" id="banner">
+  <span class="bdot"></span>
+  <div class="bmsg" id="bannerMsg"><b>PF 5 CRITICAL</b> — 96% · ↑ rising — crush threshold breached</div>
+  <div class="spacer"></div>
+  <button class="jump" id="bannerJump">Jump to PF 5</button>
+  <button id="bannerDismiss">Dismiss</button>
+</div>
+
+<!-- DASHBOARD OVERLAY -->
+<div class="overlay" id="overlay">
+  <div class="dash" id="dash"></div>
+</div>
+
+<script>
+/* ---------------- data model (procedural so each platform is distinct) ---------------- */
+function rng(seed){let s=seed;return()=>{s=(s*1103515245+12345)&0x7fffffff;return s/0x7fffffff;};}
+function band(v){return v<50?'clear':v<70?'caution':v<86?'high':'critical';}
+function bandColor(b){return{clear:'var(--sig-clear)',caution:'var(--sig-caution)',high:'var(--sig-high)',critical:'var(--sig-danger)'}[b];}
+function densBand(d){return d<60?'clear':d<75?'caution':d<88?'high':'critical';}
+
+const SERVICES=['12309','22456','12951','12002'];
+
+function makePlatform(o){
+  const r=rng(o.seed); const cap=o.cap;
+  const live=Math.round(cap*o.occ/100);
+  const zones=['A','B','C','D','E','F'].map((z,i)=>{
+    let d=Math.max(8,Math.min(99,Math.round(o.occ + (r()*44-22))));
+    return {z,d,n:Math.round(cap*d/100/6*1.4),t:['up','down','flat'][Math.floor(r()*3)]};
+  });
+  const hot=zones.reduce((a,b)=>b.d>a.d?b:a).z;
+  const inflow=[ '06','08','10','12','14','16'].map(h=>({h,seg:SERVICES.map(()=>Math.round(r()*70+10))}));
+  const assetTypes=['CAM','IMU','GATE','PA '];
+  const assets=[]; for(let i=0;i<8;i++){const t=assetTypes[i%4];
+    const st=o.state==='critical'&&i===2?'fault':(r()<0.12?'stale':'online');
+    assets.push({name:t+'-'+String(i+1).padStart(2,'0'),s:st});}
+  const sensorOn=assets.filter(a=>a.s==='online').length;
+  return {
+    id:o.id, name:o.id, state:o.state, cap, live, occ:o.occ, risk:o.risk,
+    crush:o.risk, fcast:Math.min(99,o.occ+o.fc), egress:o.egress,
+    alerts:{clear:'0',caution:'1',high:'2',critical:'4'}[o.state],
+    sensorOn, sensorTot:8,
+    sev:o.sev, zones, hot, inflow,
+    cats:{Crowding:o.occ>70?58:34,Intrusion:12,Equipment:18,Dwell:12},
+    assets,
+    breaches:o.state==='critical'?[
+      {l:'Density > safe (Zone D)',d:'6m12s',sev:'critical',pct:96},
+      {l:'Egress demand > capacity',d:'2m40s',sev:'high',pct:78},
+      {l:'Dwell overrun · service 12309',d:'1m05s',sev:'caution',pct:55}]
+      :o.state==='high'?[
+      {l:'Density > caution (Zone B)',d:'3m18s',sev:'high',pct:74},
+      {l:'Dwell overrun',d:'0m48s',sev:'caution',pct:52}]
+      :o.state==='caution'?[{l:'Density approaching limit',d:'1m22s',sev:'caution',pct:58}]
+      :[]
+  };
+}
+
+let DATA={
+  'PF 3':makePlatform({id:'PF 3',seed:73,state:'critical',cap:1200,occ:93,risk:88,fc:4,egress:12,sev:{crit:2,high:3,caut:1,watch:5,clear:9}}),
+  'PF 4':makePlatform({id:'PF 4',seed:41,state:'high',cap:1100,occ:82,risk:74,fc:6,egress:31,sev:{crit:0,high:3,caut:2,watch:4,clear:11}}),
+  'PF 2':makePlatform({id:'PF 2',seed:19,state:'caution',cap:1000,occ:71,risk:63,fc:5,egress:44,sev:{crit:0,high:1,caut:3,watch:5,clear:14}}),
+  'PF 6':makePlatform({id:'PF 6',seed:88,state:'caution',cap:950,occ:64,risk:58,fc:4,egress:48,sev:{crit:0,high:0,caut:2,watch:6,clear:15}}),
+  'PF 5':makePlatform({id:'PF 5',seed:55,state:'clear',cap:1050,occ:38,risk:31,fc:3,egress:62,sev:{crit:0,high:0,caut:1,watch:3,clear:18}}),
+  'PF 1':makePlatform({id:'PF 1',seed:12,state:'clear',cap:900,occ:24,risk:21,fc:2,egress:71,sev:{crit:0,high:0,caut:0,watch:2,clear:20}}),
+};
+const ORDER=['PF 3','PF 4','PF 2','PF 6','PF 5','PF 1']; // risk desc
+const MAPPOS={'PF 1':[30,72],'PF 2':[55,62],'PF 3':[44,40],'PF 4':[68,52],'PF 5':[78,30],'PF 6':[22,55]};
+const NEXT={'PF 1':'12m','PF 2':'2m','PF 3':'inbound','PF 4':'5m','PF 5':'8m','PF 6':'4m'};
+
+/* ---------------- render: platform list ---------------- */
+const rowsEl=document.getElementById('rows');
+function renderList(filter=''){
+  rowsEl.innerHTML='';
+  ORDER.filter(id=>id.toLowerCase().includes(filter.toLowerCase())).forEach(id=>{
+    const p=DATA[id];
+    const el=document.createElement('button');
+    el.className='prow'+(id===selected?' sel':'');
+    el.dataset.id=id;
+    el.innerHTML=`
+      <div class="r1"><span class="pid">${id}</span><span class="pill ${p.state}">${p.state}</span></div>
+      <div class="r2">
+        <div class="occbar"><i style="width:${p.occ}%;background:${bandColor(p.state)}"></i></div>
+        <span class="occv">${p.occ}%</span>
+      </div>
+      <div class="eta">
+        <span>${p.live.toLocaleString()} / ${p.cap.toLocaleString()}</span>
+        <span class="in">${NEXT[id]==='inbound'?'<svg viewBox=\"0 0 24 24\"><path d=\"M5 12h14M13 6l6 6-6 6\"/></svg> inbound':'next '+NEXT[id]}</span>
+      </div>`;
+    el.onclick=()=>openDash(id);
+    rowsEl.appendChild(el);
+  });
+}
+
+/* ---------------- render: map markers ---------------- */
+const markersEl=document.getElementById('markers');
+const peekEl=document.getElementById('peek');
+function renderMarkers(){
+  markersEl.innerHTML='';
+  ORDER.forEach(id=>{
+    const p=DATA[id], [x,y]=MAPPOS[id];
+    const el=document.createElement('div');
+    el.className='platform '+p.state+(id===selected?' sel':'');
+    el.style.left=x+'%'; el.style.top=y+'%';
+    el.innerHTML=`<div class="bar"><span class="aspect"></span></div>
+      <div class="miniocc"><i style="width:${p.occ}%;background:${bandColor(p.state)}"></i></div>
+      <div class="plabel">${id}</div>`;
+    el.onclick=()=>openDash(id);
+    el.onmouseenter=()=>showPeek(id,x,y);
+    el.onmouseleave=()=>peekEl.classList.remove('show');
+    markersEl.appendChild(el);
+  });
+}
+function showPeek(id,x,y){
+  const p=DATA[id];
+  peekEl.style.left=x+'%'; peekEl.style.top=y+'%';
+  peekEl.innerHTML=`<h4>${id}<span class="pill ${p.state}">${p.state}</span></h4>
+    <div class="pk-row"><span>Occupancy</span><b>${p.occ}%</b></div>
+    <div class="pk-row"><span>Risk index</span><b>${p.risk}</b></div>
+    <div class="pk-row"><span>Forecast T+15</span><b>${p.fcast}%</b></div>`;
+  peekEl.classList.add('show');
+}
+
+/* ---------------- telemetry strip charts ---------------- */
+function barChart(svg,vals,color){
+  const w=190,h=46,n=vals.length,gap=4,bw=(w-gap*(n-1))/n,mx=Math.max(...vals);
+  svg.innerHTML=vals.map((v,i)=>{const bh=Math.max(2,v/mx*(h-4));return `<rect x="${i*(bw+gap)}" y="${h-bh}" width="${bw}" height="${bh}" rx="1.5" fill="${color}"/>`;}).join('');
+}
+barChart(document.getElementById('ch-thru'),[8,12,9,15,11,14,10,16],'#3A8FB7');
+barChart(document.getElementById('ch-load'),[4,6,5,7,9,8,7,6],'#5C7CFA');
+barChart(document.getElementById('ch-alert'),[1,0,2,0,1,3,0,1],'#E0A23B');
+
+/* ---------------- dashboard ---------------- */
+const overlay=document.getElementById('overlay');
+const dash=document.getElementById('dash');
+let selected=null;
+
+function gaugeSVG(val){
+  const cx=95,cy=100,r=72,start=270; // 180deg semicircle opening downward (left→top→right)
+  function pol(a){const rad=(a-90)*Math.PI/180;return [cx+r*Math.cos(rad),cy+r*Math.sin(rad)];}
+  function arc(a0,a1,col){const [sx,sy]=pol(a0),[ex,ey]=pol(a1);const large=(a1-a0)>180?1:0;
+    return `<path d="M ${sx} ${sy} A ${r} ${r} 0 ${large} 1 ${ex} ${ey}" stroke="${col}" stroke-width="13" fill="none" stroke-linecap="butt"/>`;}
+  const seg=(p)=>start+(p/100)*180;
+  const bands=arc(seg(0),seg(50),'var(--sig-clear)')+arc(seg(50),seg(70),'var(--sig-caution)')
+    +arc(seg(70),seg(86),'var(--sig-high)')+arc(seg(86),seg(100),'var(--sig-danger)');
+  const na=seg(val);const [nx,ny]=pol(na);
+  const needle=`<line x1="${cx}" y1="${cy}" x2="${nx}" y2="${ny}" stroke="#E6EAEF" stroke-width="2.5" stroke-linecap="round"/>
+    <circle cx="${cx}" cy="${cy}" r="5" fill="#E6EAEF"/>`;
+  return `<svg viewBox="0 0 190 120">${bands}${needle}</svg>`;
+}
+function ringSVG(count,total,col){
+  const r=30,c=2*Math.PI*r,frac=total?Math.min(1,count/Math.max(total,1)):0;
+  return `<svg viewBox="0 0 74 74">
+    <circle cx="37" cy="37" r="${r}" stroke="var(--line)" stroke-width="5" fill="none"/>
+    <circle cx="37" cy="37" r="${r}" stroke="${col}" stroke-width="5" fill="none"
+      stroke-dasharray="${c}" stroke-dashoffset="${c*(1-Math.max(frac,count>0?.12:0))}"
+      stroke-linecap="round" transform="rotate(-90 37 37)"/>
+    <text x="37" y="42" text-anchor="middle" fill="${count>0?col:'var(--text-muted)'}" font-family="var(--mono)" font-size="17" font-weight="500">${count}</text>
+  </svg>`;
+}
+
+function renderDash(id){
+  const p=DATA[id]; const idx=ORDER.indexOf(id);
+  const sevTotal=Object.values(p.sev).reduce((a,b)=>a+b,0);
+  const sevDef=[['Critical',p.sev.crit,'var(--sig-danger)'],['High',p.sev.high,'var(--sig-high)'],
+    ['Caution',p.sev.caut,'var(--sig-caution)'],['Watch',p.sev.watch,'var(--cat-1)'],['Cleared',p.sev.clear,'var(--sig-clear)']];
+
+  // kpis
+  const kpi=(icon,label,val,unit,extra='')=>`<div class="kpi">
+    <div class="kl">${icon}<span>${label}</span></div>
+    <div class="kv" ${extra}>${val}</div><div class="ku">${unit}</div></div>`;
+  const dUp=(t)=>`<span class="delta up">▲ ${t}</span>`, dDn=(t)=>`<span class="delta down">▼ ${t}</span>`;
+  const kpis=`
+    ${kpi('<svg viewBox="0 0 24 24"><path d="M17 20a5 5 0 0 0-10 0M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"/></svg>','Occupancy',
+        p.live.toLocaleString(),`${p.occ}% cap ${dUp('3%')}`)}
+    ${kpi('<svg viewBox="0 0 24 24"><path d="M12 3 2 20h20L12 3ZM12 9v5M12 17h.01"/></svg>','Crush index',
+        `<span style="color:${bandColor(p.state)}">${p.crush}</span>`,`/ 100 ${dUp('5')}`)}
+    ${kpi('<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>','Forecast T+15',
+        `${p.fcast}%`,`peak ${dUp('+'+(p.fcast-p.occ)+'%')}`)}
+    ${kpi('<svg viewBox="0 0 24 24"><path d="M10 3h4l1 4-2 2 2 2-1 4h-4l-1-4 2-2-2-2 1-4Z"/></svg>','Active alerts',
+        `<span style="color:${bandColor(p.state)}">${p.alerts}</span>`,`${p.state==='critical'?'2 new':'live'}`)}
+    ${kpi('<svg viewBox="0 0 24 24"><path d="M3 12h7l-2-3M21 12h-7l2 3M9 5h6M9 19h6"/></svg>','Egress headroom',
+        `${p.egress}%`,`open cap ${dDn('4%')}`)}
+    ${kpi('<svg viewBox="0 0 24 24"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="2.5"/></svg>','Sensor coverage',
+        `${p.sensorOn}/${p.sensorTot}`,`online ${p.sensorOn<p.sensorTot?'<span style=\"color:var(--sig-danger)\">'+(p.sensorTot-p.sensorOn)+' down</span>':'all up'}`)}`;
+
+  // severity rings
+  const rings=sevDef.map(([l,c,col])=>`<div class="ring">${ringSVG(c,Math.max(...sevDef.map(s=>s[1])),col)}<span class="rl">${l}</span></div>`).join('');
+
+  // zone heatmap
+  const hotZone=p.zones.find(z=>z.z===p.hot);
+  const zoneCells=p.zones.map(z=>{
+    const col=bandColor(densBand(z.d));
+    return `<div class="zone" style="background:${col}">
+      ${z.z===p.hot?`<div class="callout">Hot zone · ${z.z} · <b>${z.d}%</b> ↑</div>`:''}
+      <span class="zn">${z.z}</span><span class="zd">${z.d}%</span></div>`;
+  }).join('');
+  const zoneList=p.zones.map(z=>`<div class="zl-row">
+    <span class="zlz">${z.z}</span><span class="zln">${z.n}</span>
+    <div class="zl-bar"><i style="width:${z.d}%;background:${bandColor(densBand(z.d))}"></i></div>
+    <span class="zlt trend ${z.t}">${z.t==='up'?'▲':z.t==='down'?'▼':'—'}</span></div>`).join('');
+
+  // inflow stacked bars (categorical colors, NOT signal aspects)
+  const catCols=['var(--cat-1)','var(--cat-2)','var(--cat-3)','var(--cat-4)'];
+  const mxIn=Math.max(...p.inflow.map(c=>c.seg.reduce((a,b)=>a+b,0)));
+  const inflow=p.inflow.map(c=>{
+    const tot=c.seg.reduce((a,b)=>a+b,0), hpct=tot/mxIn*100;
+    const stack=c.seg.map((v,i)=>`<i style="height:${v/tot*100}%;background:${catCols[i]}"></i>`).join('');
+    return `<div class="icol"><div class="istack" style="height:${hpct}%">${stack}</div><span class="ix">${c.h}:00</span></div>`;
+  }).join('');
+  const inLegend=SERVICES.map((s,i)=>`<span><i style="background:${catCols[i]}"></i>${s}</span>`).join('');
+
+  // assets
+  const assets=p.assets.map(a=>`<div class="arow">
+    <span class="adot bg-${a.s}"></span><span class="an">${a.name}</span><span class="as ${a.s}">${a.s}</span></div>`).join('');
+
+  // condition categories donut (categorical)
+  const catEntries=Object.entries(p.cats); const catTot=catEntries.reduce((a,[,v])=>a+v,0);
+  let acc=0; const stops=catEntries.map(([k,v],i)=>{const a=acc,b=acc+v/catTot*360;acc=b;return `${catCols[i]} ${a}deg ${b}deg`;}).join(',');
+  const donutLegend=catEntries.map(([k,v],i)=>`<div class="dl-row"><i style="background:${catCols[i]}"></i>${k}<span class="dlv">${Math.round(v/catTot*100)}%</span></div>`).join('');
+
+  // breaches
+  const breaches=p.breaches.length?p.breaches.map(b=>`<div class="br-row">
+    <div class="br-top"><span class="brl">${b.l}</span><span class="brd">${b.d}</span></div>
+    <div class="br-bar"><i style="width:${b.pct}%;background:${bandColor(b.sev)}"></i></div></div>`).join('')
+    :`<div style="color:var(--text-muted);font-size:12px;padding:14px 0;text-align:center">Within limits — no active breaches</div>`;
+
+  dash.innerHTML=`
+  <div class="dash-head">
+    <div class="switch">
+      <button id="prevPf" title="Previous platform"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>
+      <button id="nextPf" title="Next platform"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+    </div>
+    <div><span class="pf-id">${id}</span> <span class="pill ${p.state}">${p.state}</span>
+      <div class="sub">NDLS · cap ${p.cap.toLocaleString()} · live <span id="dashClock">14:32</span></div></div>
+    <div class="spacer"></div>
+    <button class="close" id="closeDash" title="Close (Esc)"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+  </div>
+
+  <div class="dash-body">
+    <div class="kpis">${kpis}</div>
+
+    <div class="grid-2">
+      <div class="panel"><div class="ph"><h3>Platform risk</h3></div>
+        <div class="gauge-wrap">${gaugeSVG(p.risk)}
+          <div class="gauge-val" style="color:${bandColor(p.state)}">${p.risk}</div>
+          <div class="gauge-cap">composite · 0–100</div></div></div>
+      <div class="panel"><div class="ph"><h3>Active conditions by severity</h3>
+        <span class="va">View all <svg width="11" height="11" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><path d="M7 17 17 7M7 7h10v10"/></svg></span></div>
+        <div class="rings">${rings}</div></div>
+    </div>
+
+    <div class="grid-2b">
+      <div class="panel"><div class="ph"><h3>Platform zone heatmap</h3></div>
+        <div class="platform-schem">
+          <div class="schem-rail">${zoneCells}</div>
+          <div class="schem-marks"><span>◀ ENTRY / STAIRS</span><span>RAMP / EXIT ▶</span></div>
+          <div class="zonelist">${zoneList}</div></div></div>
+      <div class="panel"><div class="ph"><h3>Inflow by arriving service · /hr</h3></div>
+        <div class="inflow">${inflow}</div>
+        <div class="legend">${inLegend}</div></div>
+    </div>
+
+    <div class="grid-3">
+      <div class="panel"><div class="ph"><h3>Asset &amp; sensor health</h3></div>
+        <div class="assets">${assets}</div></div>
+      <div class="panel"><div class="ph"><h3>Condition categories</h3></div>
+        <div class="donut-wrap">
+          <div class="donut" style="background:conic-gradient(${stops})"></div>
+          <div class="dlegend">${donutLegend}</div></div></div>
+      <div class="panel"><div class="ph"><h3>Threshold breaches</h3></div>
+        <div class="breaches">${breaches}</div></div>
+    </div>
+  </div>`;
+
+  // wire dash controls
+  document.getElementById('closeDash').onclick=closeDash;
+  document.getElementById('prevPf').onclick=()=>openDash(ORDER[(idx-1+ORDER.length)%ORDER.length]);
+  document.getElementById('nextPf').onclick=()=>openDash(ORDER[(idx+1)%ORDER.length]);
+}
+
+/* ---------------- open / close ---------------- */
+let firstOpen=true, bannerFired=false;
+function openDash(id){
+  selected=id;
+  renderDash(id);
+  overlay.classList.add('open');
+  renderList(document.getElementById('search').value);
+  renderMarkers();
+  // demo: cross-platform alarm interrupt, once
+  if(firstOpen && !bannerFired){
+    firstOpen=false;
+    setTimeout(()=>{ if(overlay.classList.contains('open')) fireBanner(); },6500);
+  }
+}
+function closeDash(){
+  overlay.classList.remove('open');
+}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDash();});
+overlay.addEventListener('click',e=>{if(e.target===overlay)closeDash();});
+
+/* ---------------- alarm banner (interrupt) ---------------- */
+const banner=document.getElementById('banner');
+function fireBanner(){
+  if(bannerFired) return; bannerFired=true;
+  // escalate PF 5 on the live map behind the blur
+  DATA['PF 5'].state='critical'; DATA['PF 5'].occ=96; DATA['PF 5'].risk=94;
+  DATA['PF 5']=makePlatform({id:'PF 5',seed:55,state:'critical',cap:1050,occ:96,risk:94,fc:2,egress:9,sev:{crit:2,high:2,caut:1,watch:2,clear:14}});
+  // re-sort order so PF5 climbs
+  ORDER.sort((a,b)=>DATA[b].risk-DATA[a].risk);
+  renderMarkers(); renderList(document.getElementById('search').value);
+  document.querySelector('#alarmCount b').textContent='2';
+  banner.classList.add('show');
+}
+document.getElementById('bannerDismiss').onclick=()=>banner.classList.remove('show');
+document.getElementById('bannerJump').onclick=()=>{banner.classList.remove('show');openDash('PF 5');};
+document.getElementById('alarmCount').onclick=()=>openDash(ORDER[0]);
+
+/* ---------------- live clock ---------------- */
+function tick(){
+  const d=new Date(); const hh=String(14).padStart(2,'0');
+  const mm=String(32+Math.floor(d.getSeconds()/12)%5).padStart(2,'0');
+  const ss=String(d.getSeconds()).padStart(2,'0');
+  document.getElementById('clock').textContent=`${hh}:${mm}:${ss}`;
+  const dc=document.getElementById('dashClock'); if(dc) dc.textContent=`${hh}:${mm}`;
+}
+setInterval(tick,1000); tick();
+
+/* ---------------- search ---------------- */
+document.getElementById('search').oninput=e=>renderList(e.target.value);
+
+/* ---------------- init ---------------- */
+renderList(); renderMarkers();
+</script>
+</body>
+</html>

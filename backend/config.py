@@ -1,5 +1,6 @@
 """RailGuard AI — Configuration"""
 
+import os
 from pydantic import BaseModel
 
 
@@ -9,8 +10,9 @@ class SimulationConfig(BaseModel):
     num_platforms: int = 6
     num_tracks: int = 4
     max_platform_capacity: int = 500
-    warning_threshold: float = 0.6
+    warning_threshold: float = 0.7
     critical_threshold: float = 0.85
+    congesting_threshold: float = 0.55
     forecast_horizons: list[int] = [5, 10, 15, 20]  # minutes
 
 
@@ -31,10 +33,13 @@ class StationConfig(BaseModel):
         {"id": 4, "platforms": [5, 6], "z": 12},
     ]
 
+def get_cors_origins():
+    origins = os.environ.get("CORS_ORIGINS", "http://localhost:3000,http://localhost:3001,https://frontend-qsi5bsfwg-priteshvirat24s-projects.vercel.app")
+    return [o.strip() for o in origins.split(",")]
 
 class AppConfig(BaseModel):
     """Application configuration."""
     simulation: SimulationConfig = SimulationConfig()
     station: StationConfig = StationConfig()
     websocket_heartbeat: int = 30  # seconds
-    cors_origins: list[str] = ["http://localhost:3000", "http://localhost:3001"]
+    cors_origins: list[str] = get_cors_origins()

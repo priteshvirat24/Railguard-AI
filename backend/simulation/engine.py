@@ -24,7 +24,7 @@ class SimulationEngine:
     def __init__(self, config: AppConfig):
         self.config = config
         self.event_store = EventStore()
-        self.station = Station(config.station, self.event_store)
+        self.station = Station(config, self.event_store)
         self.forecast_engine = ForecastEngine()
 
         self.tick = 0
@@ -101,7 +101,7 @@ class SimulationEngine:
         self.stop()
         self.tick = 0
         self.event_store.clear()
-        self.station = Station(self.config.station, self.event_store)
+        self.station = Station(self.config, self.event_store)
         self.forecasts.clear()
         self.active_plans.clear()
         self.selected_plan_id = None
